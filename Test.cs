@@ -8,5 +8,6 @@ namespace pocitani_zprav_fb
 {
     class Test
     {
+        int testovaciInt;
     }
 }
