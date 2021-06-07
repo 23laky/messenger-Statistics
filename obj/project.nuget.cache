@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "HOGNm20wiFo/TZSSFgtxEWldS2qCoTntVj2BUqg61rOT6cuuWYtpwjHta4FCHRvqrpaqk9d/Lts51teThmGdwQ==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Lukáš\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}
