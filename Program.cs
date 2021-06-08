@@ -9,6 +9,7 @@ using System.Text;
 
 namespace pocitani_zprav_fb
 {
+    struct Photo { }
     struct Ucastnik
     {
         public string Jmeno { get; set; }
@@ -19,9 +20,37 @@ namespace pocitani_zprav_fb
 
     class Message
     {
-        public string sender_name { get; set; }
-        public string content { get; set; }
-        public long timestamp_ms { get; set; }
+        public string Sender_name { get; set; }
+        public string Content { get; set; }
+        public long Timestamp_ms { get; set; }
+        public Photo[] Photos { get; set; }
+    }
+
+    static class Dekoder
+    {
+        static string PovoleneZnakyProZpravy = "aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž" +
+            "AÁBCČDĎEÉĚFGHIÍJKLMNŇOÓQPRŘSŠTŤUÚŮVWXYÝZŽ#1234567890()-: *,.!?@&{}+;%/´";
+        static public string Dekoduj(string text)
+        { //ISO-8859-1
+            try
+            {
+                Encoding spravneKodovani = Encoding.GetEncoding("ISO-8859-1");
+                var odescapovanyText = System.Text.RegularExpressions.Regex.Unescape(text);
+                string s = Encoding.UTF8.GetString(spravneKodovani.GetBytes(odescapovanyText));
+                foreach (char c in s)
+                {
+                    if (!PovoleneZnakyProZpravy.Contains(c))
+                    {
+                        s = s.Replace(c, '\0');
+                    }
+                }
+                return s;
+            }
+            catch
+            {
+                return text;
+            }
+        }
     }
 
     class Statistic
@@ -40,111 +69,87 @@ namespace pocitani_zprav_fb
             List<Ucastnik> ucastniciChatu = new();
             foreach (JToken ucastnik in jtokenUcastnici)
             {
-                ucastniciChatu.Add(new() { Jmeno = Dekoduj(ucastnik["name"].ToString()), VsechnySlova = new(), VsechnyZpravy = new() });
+                ucastniciChatu.Add(new() { Jmeno = Dekoder.Dekoduj(ucastnik["name"].ToString()), VsechnySlova = new(), VsechnyZpravy = new() });
             }
-
 
             IList<JToken> jtokenZpravy = messenger["messages"].Children().ToList(); //vybrání zpráv
             IList<Message> zpravy = new List<Message>();
             foreach (JToken jtoken in jtokenZpravy)
             {
-                if (jtoken["content"] != null)
+                if (jtoken["content"] != null || jtoken["photos"] != null)
                 {
                     Message message = jtoken.ToObject<Message>();
                     zpravy.Add(message);
                 }
             }
             char[] splittingChars = { ' ', '.', ',', '?', '!' };
-            //slova ve všech zprávách -> list všech slov
-            foreach (Message zprava in zpravy)
+            //slova ve všech zprávách, list všech slov
+            foreach (Message zprava in zpravy) //fotky se neevidují jako zprávy
             {
-                string[] slova = zprava.content.Split(splittingChars, StringSplitOptions.RemoveEmptyEntries);
-                //slovaVeVsechZpravach.AddRange(slova);
-
-                if (ucastniciChatu.All(u => u.Jmeno != Dekoduj(zprava.sender_name)))
+                if (ucastniciChatu.All(u => u.Jmeno != Dekoder.Dekoduj(zprava.Sender_name)))
                 { //přidání nesoučasného účastníka
-                    ucastniciChatu.Add(new Ucastnik() { Jmeno = Dekoduj(zprava.sender_name), VsechnySlova = new(), VsechnyZpravy = new() });
+                    ucastniciChatu.Add(new Ucastnik() { Jmeno = Dekoder.Dekoduj(zprava.Sender_name), VsechnySlova = new(), VsechnyZpravy = new() });
                 }
+                Ucastnik autor = ucastniciChatu.Find(u => u.Jmeno == Dekoder.Dekoduj(zprava.Sender_name));
 
-                Ucastnik autor = ucastniciChatu.Find(u => u.Jmeno == Dekoduj(zprava.sender_name));
-                autor.VsechnySlova.AddRange(slova);
-                autor.VsechnyZpravy.Add(zprava);
-                ucastniciChatu[ucastniciChatu.IndexOf(ucastniciChatu.Find(u => u.Jmeno == Dekoduj(zprava.sender_name)))] = autor;
+                if (zprava.Content != null)
+                { //zpráva
+                    string[] slova = zprava.Content.Split(splittingChars, StringSplitOptions.RemoveEmptyEntries);
+                    autor.VsechnySlova.AddRange(slova);
+                    autor.VsechnyZpravy.Add(zprava);
+                }
+                else //fotka
+                    foreach (var item in zprava.Photos)
+                    {
+                        autor.PocetFotek++;
+                    }
+                ucastniciChatu[ucastniciChatu.IndexOf(ucastniciChatu.Find(u => u.Jmeno == Dekoder.Dekoduj(zprava.Sender_name)))] = autor;
             }
             return ucastniciChatu;
-        }
-        public string Dekoduj(string text)
-        { //ISO-8859-1
-            try
-            {
-                Encoding spravneKodovani = Encoding.GetEncoding("ISO-8859-1");
-                var odescapovanyText = System.Text.RegularExpressions.Regex.Unescape(text);
-                return Encoding.UTF8.GetString(spravneKodovani.GetBytes(odescapovanyText));
-            }
-            catch
-            {
-                return text;
-            }
-
         }
     }
 
     class Program
     {
-        static string PovoleneZnakyProZpravy = "aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzžAÁBCČDĎEÉĚFGHIÍJKLMNŇOÓQPRŘSŠTŤUÚŮVWXYÝZŽ#1234567890()-: *,.!?@&{}+;%/";
-        static string PovoleneZnaky = "aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzžAÁBCČDĎEÉĚFGHIÍJKLMNŇOÓQPRŘSŠTŤUÚŮVWXYÝZŽ#";
-        static string[] GenerickeSlova = { "kdyz", "když", "taky", "bych", "proste", "prostě", "ještě", "jeste",
-            "nebo", "jako", "uplne", "úplně", "bude", "jsou", "jsem", "třeba", "treba", "bejt", "nekdo", "toho",
-            "fakt", "nekdo", "někdo", "budu", "jestli", "protože", "vsichni", "všichni","jenom","něco","neco","není",
-            "takže","stejně","jsme","těch","spíš","snad","vubec","bylo","teda","tohle","kdyby","neni","budou", "furt",
-            "někdy","posílá","přílohu","nebylo","tenhle","tady","tomu","takhle","podle","všechno","tvoje","nebude",
-            "nikdo","dnes","dneska","jste","skoro","tebe","jeho","stále","hodně","nějaký","nejaky","dost","aspon","porad",
-            "který","takový","vůbec","kvůli","kvuli","hned","prave","zase","stejne","kazdej","každej","udělal","tohodle","pokud",
-            "přesně","vždycky","aspoň","nejak","byla","jinak","nikdy","budem","takze","vsechny","hlavne","vsechno","uplně",
-            "možná","mnou","nějak","opět","alespoň","mohl","nejsou","máme","protoze","youtube","Jako","Taky","Fakt","Jsem","Posíláte",
-            "Proste","Třeba","jono","Jono","Jsem","Nebo","Když","Takze","Protože","Vždyť","Není","mezi","facebook","docela","chtel","chci",
-            "myslim","Skupině","fotku","kolik","mame","prej","todle","nejde","proc","dobry","cely","tesim","nejlepsi","nejvic"};
-        static int VelikostZebricku = 3;
-
         static void Main(string[] args)
         {
             Console.WriteLine("Messenger statistics by 23laky");
             Console.Write("Zadejte počet souborů:");
+
             int pocetSouboru = int.Parse(Console.ReadLine());
 
             Statistic Stats = new();
-
-            List<Ucastnik> ucastnici = Stats.VygenerujStatistiky(1);
-            if (pocetSouboru > 1)
+            List<Ucastnik> ucastnici = new();
+            for (int i = 1; i <= pocetSouboru; i++)
             {
-                for (int i = 2; i <= pocetSouboru; i++)
+                List<Ucastnik> dalsiUcastnici = Stats.VygenerujStatistiky(i);
+                foreach (Ucastnik ucastnik in dalsiUcastnici)
                 {
-                    List<Ucastnik> dalsiUcastnici = Stats.VygenerujStatistiky(i);
-                    foreach (Ucastnik ucastnik in dalsiUcastnici)
+                    if (ucastnici.Exists(u => u.Jmeno == ucastnik.Jmeno)) //pokud existuje
                     {
-                        if (ucastnici.Exists(u => u.Jmeno == ucastnik.Jmeno)) //pokud existuje
-                        {
-                            Ucastnik puvodniUcastnik = ucastnici.Find(u => u.Jmeno == ucastnik.Jmeno);
-                            puvodniUcastnik.VsechnySlova.AddRange(ucastnik.VsechnySlova);
-                            puvodniUcastnik.VsechnyZpravy.AddRange(ucastnik.VsechnyZpravy);
-                            ucastnici[ucastnici.IndexOf(ucastnici.Find(u => u.Jmeno == ucastnik.Jmeno))] = puvodniUcastnik;
-                        }
-                        else //přidáme nového pokud zatím neexistoval
-                        {
-                            ucastnici.Add(ucastnik);
-                        }
+                        Ucastnik puvodniUcastnik = ucastnici.Find(u => u.Jmeno == ucastnik.Jmeno);
+                        puvodniUcastnik.VsechnySlova.AddRange(ucastnik.VsechnySlova);
+                        puvodniUcastnik.VsechnyZpravy.AddRange(ucastnik.VsechnyZpravy);
+                        puvodniUcastnik.PocetFotek += ucastnik.PocetFotek;
+                        ucastnici[ucastnici.IndexOf(ucastnici.Find(u => u.Jmeno == ucastnik.Jmeno))] = puvodniUcastnik;
                     }
-                    Console.Clear();
-                    Console.Write($"Zpracován soubor č. {i}/{pocetSouboru}");
+                    else //přidáme nového pokud zatím neexistoval
+                        ucastnici.Add(ucastnik);
                 }
+                Console.Clear();
+                Console.Write($"Zpracován soubor č. {i}/{pocetSouboru}");
             }
             Vypis(ucastnici);
+
             Console.ReadKey();
         }
         static void Vypis(List<Ucastnik> ucastnici)
         {
-            Console.WriteLine($"\nCelkem se v tomto chatu napsalo {VsechnyZpravy(ucastnici)} zpráv\n");
-            var dotaz = from u in ucastnici
+            Console.WriteLine($"\nCelkem se v tomto chatu napsalo {VypisCelkemZpravVKonverzaci(ucastnici)} zpráv.");
+
+            Console.WriteLine($"Celkem se v tomto chatu poslalo {VypisCelkemFotekVKonverzaci(ucastnici)} fotek.\n");
+
+            var dotaz = from u in ucastnici //seřazení účastníků podle jejich příspěvků
                         orderby u.VsechnyZpravy.Count descending
                         select u;
             ucastnici = dotaz.ToList();
@@ -152,9 +157,17 @@ namespace pocitani_zprav_fb
             {
                 if (ucastnik.VsechnyZpravy.Count > 0)
                 {
-                    VypisCelkemSlovAZprav(ucastnik);
+                    Console.WriteLine("______________________________________");
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine(ucastnik.Jmeno);
+                    Console.ResetColor();
+                    Console.Write($"Napsal {ucastnik.VsechnyZpravy.Count} zpráv a celkem {ucastnik.VsechnySlova.Count} slov,");
+                    Console.WriteLine($"t.j. v průměru {Math.Round((double)ucastnik.VsechnySlova.Count / (double)ucastnik.VsechnyZpravy.Count, 2)} slov ve zprávě.");
+                    Console.WriteLine($"Poslal celkem {ucastnik.PocetFotek} fotek.\n");
+
 
                     Dictionary<string, int> ucastnikuvSlovnik = VygenerujZebricek(ucastnik.VsechnySlova);
+
                     VypisNejpouzivanejsiSlova(ucastnikuvSlovnik);
                     VypisNejdelsiSlovo(ucastnikuvSlovnik);
                     VypisUnikatniSlova(ucastnikuvSlovnik);
@@ -166,19 +179,17 @@ namespace pocitani_zprav_fb
                 }
             }
         }
-        static void VypisCelkemSlovAZprav(Ucastnik ucastnik)
+        static int VypisCelkemFotekVKonverzaci(List<Ucastnik> participants)
         {
-            Console.WriteLine("______________________________________");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(ucastnik.Jmeno);
-            Console.ResetColor();
-            Console.Write($"Napsal {ucastnik.VsechnyZpravy.Count} zpráv a celkem {ucastnik.VsechnySlova.Count} slov,");
-            Console.WriteLine($"t.j. v průměru {Math.Round((double)ucastnik.VsechnySlova.Count / (double)ucastnik.VsechnyZpravy.Count, 2)} slov ve zprávě.\n");
+            var query = (from p in participants
+                         select p.PocetFotek).Sum();
+            return query;
         }
+
         static void VypisNeajktivnejsiDen(Ucastnik ucastnik)
         {
             var dotaz = (from z in ucastnik.VsechnyZpravy
-                         group z by UnixTimeStampToDateTime(z.timestamp_ms).Date into Dny
+                         group z by UnixTimeStampToDateTime(z.Timestamp_ms).Date into Dny
                          orderby Dny.Count() descending
                          select Dny).Take(3);
             Console.WriteLine("Toto jsou 3 nejaktivnější dny:");
@@ -190,7 +201,7 @@ namespace pocitani_zprav_fb
         static void VypisNejaktivnejsiRoky(Ucastnik ucastnik)
         {
             var dotaz = from z in ucastnik.VsechnyZpravy
-                        group z by UnixTimeStampToDateTime(z.timestamp_ms).Year into Roky
+                        group z by UnixTimeStampToDateTime(z.Timestamp_ms).Year into Roky
                         orderby Roky.Count() descending
                         select Roky;
             Console.WriteLine("Rozdělení podle let:");
@@ -198,47 +209,48 @@ namespace pocitani_zprav_fb
             {
                 Console.WriteLine($"{rok.Key} - {rok.Count()} zpráv");
             }
-
         }
+
         static void VypisNejdelsiZpravu(Ucastnik ucastnik)
         {
             var dotaz = (from z in ucastnik.VsechnyZpravy
-                         where Dekoduj(z.content).All(c => PovoleneZnakyProZpravy.Contains(c))
-                         orderby z.content.Length descending
+                         where !Dekoder.Dekoduj(z.Content).StartsWith("https:")
+                         orderby z.Content.Length descending
                          select z).Take(3);
             Console.WriteLine("\nToto jsou jeho 3 nejdelší zprávy:");
             if (dotaz.Count() == 3)
             {
                 foreach (Message zprava in dotaz)
                 {
-                    Console.WriteLine($"{UnixTimeStampToDateTime((zprava as Message).timestamp_ms).ToShortDateString()}: {Dekoduj((zprava as Message).content)}\n");
+                    Console.WriteLine($"{UnixTimeStampToDateTime((zprava as Message).Timestamp_ms).ToShortDateString()}: {Dekoder.Dekoduj((zprava as Message).Content)}\n");
                 }
             }
         }
+
         static void VypisPrvniAPosledniZpravu(Ucastnik ucastnik)
         {
             var dotaz = from z in ucastnik.VsechnyZpravy
-                        where Dekoduj(z.content).All(c => PovoleneZnakyProZpravy.Contains(c))
-                        orderby z.timestamp_ms
+                        orderby z.Timestamp_ms
                         select z;
             if (dotaz.Count() > 0)
             {
                 Console.WriteLine("\nToto je první zpráva, kterou do chatu napsal:");
-                Console.WriteLine($"{UnixTimeStampToDateTime((dotaz.First() as Message).timestamp_ms).ToShortDateString()}: {Dekoduj((dotaz.First() as Message).content)}");
+                Console.WriteLine($"{UnixTimeStampToDateTime((dotaz.First() as Message).Timestamp_ms).ToShortDateString()}: {Dekoder.Dekoduj((dotaz.First() as Message).Content)}");
                 Console.WriteLine("\nToto je poslední zpráva, kterou do chatu napsal:");
-                Console.WriteLine($"{UnixTimeStampToDateTime((dotaz.Last() as Message).timestamp_ms).ToShortDateString()}: {Dekoduj((dotaz.Last() as Message).content)}");
+                Console.WriteLine($"{UnixTimeStampToDateTime((dotaz.Last() as Message).Timestamp_ms).ToShortDateString()}: {Dekoder.Dekoduj((dotaz.Last() as Message).Content)}");
             }
         }
+
         static void VypisNejdelsiSlovo(Dictionary<string, int> slovnik)
         {
             var dotaz = (from s in slovnik
-                         where Dekoduj(s.Key).All(c => PovoleneZnaky.Contains(c))
+                         where Dekoder.Dekoduj(s.Key).All(c => char.IsLetterOrDigit(c) || c == '#')
                          orderby s.Key.Length descending
                          select s.Key).Take(3);
             Console.WriteLine($"\nToto jsou 3 nejdelší slova, které použil:");
             foreach (var slovo in dotaz)
             {
-                Console.WriteLine(Dekoduj(slovo));
+                Console.WriteLine(Dekoder.Dekoduj(slovo));
             }
         }
 
@@ -249,24 +261,27 @@ namespace pocitani_zprav_fb
                         select s;
             Console.WriteLine($"\nCelkem použil {dotaz.Count()} unikátních slov.");
         }
+
         static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
         {
             System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
             dtDateTime = dtDateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
             return dtDateTime;
         }
-        static int VsechnyZpravy(List<Ucastnik> list)
+
+        static int VypisCelkemZpravVKonverzaci(List<Ucastnik> list)
         {
             var dotaz = (from u in list
                          select u.VsechnyZpravy.Count).Sum();
             return dotaz;
         }
+
         static void VypisNejpouzivanejsiSlova(Dictionary<string, int> zebricek)
         {
             var dotaz = (from par in zebricek
-                         where Dekoduj(par.Key).Length > 3 && Dekoduj(par.Key).All(c => PovoleneZnaky.Contains(c)) && !GenerickeSlova.Contains(Dekoduj(par.Key))
+                         where Dekoder.Dekoduj(par.Key).Length > 3 && Dekoder.Dekoduj(par.Key).All(c => char.IsLetterOrDigit(c)) && !GenerickeSlova.Contains(Dekoder.Dekoduj(par.Key))
                          orderby par.Value descending
-                         select par).Take(20); //vybereme pouze 10 nejpoužívanějších
+                         select par).Take(20);
 
             Console.WriteLine("20 nejpoužívanějších slov v tomto chatu je:");
             int poradi = 1;
@@ -274,42 +289,37 @@ namespace pocitani_zprav_fb
             {
                 Console.Write($"{poradi}.\t");
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.Write($"{Dekoduj(slovo.Key)}".PadRight(18));
+                Console.Write($"{Dekoder.Dekoduj(slovo.Key)}".PadRight(18));
                 Console.ResetColor();
                 Console.WriteLine($"použito {slovo.Value}x");
                 poradi++;
             }
         }
+
         static Dictionary<string, int> VygenerujZebricek(List<string> seznamSlov)
         {
             Dictionary<string, int> zebricek = new();
             foreach (string slovo in seznamSlov)
             {
-                if (zebricek.TryGetValue(slovo, out int vyskyt)) //pokud žebříček obsahuje zmíněné slovo, zvýší jeho
-                {                                                //výskyt++
+                if (zebricek.TryGetValue(slovo, out int vyskyt)) //pokud žebříček obsahuje zmíněné slovo, zvýší jeho výskyt                                        //výskyt++
                     zebricek[slovo] = ++vyskyt;
-                }
                 else                                             //jinak ho zalistuje a přidá mu hodnotu výskytu 1x
-                {
                     zebricek.Add(slovo, 1);
-                }
             }
             return zebricek;
         }
-        static string Dekoduj(string text)
-        { //ISO-8859-1
-            try
-            {
-                Encoding spravneKodovani = Encoding.GetEncoding("ISO-8859-1");
-                var odescapovanyText = System.Text.RegularExpressions.Regex.Unescape(text);
-                return Encoding.UTF8.GetString(spravneKodovani.GetBytes(odescapovanyText));
-            }
-            catch (Exception)
-            {
-                return text;
-            }
 
-        }
-
+        static string[] GenerickeSlova = { "kdyz", "když", "taky", "bych", "proste", "prostě", "ještě", "jeste",
+            "nebo", "jako", "uplne", "úplně", "bude", "jsou", "jsem", "třeba", "treba", "bejt", "nekdo", "toho",
+            "fakt", "nekdo", "někdo", "budu", "jestli", "protože", "vsichni", "všichni","jenom","něco","neco","není",
+            "takže","stejně","jsme","těch","spíš","snad","vubec","bylo","teda","tohle","kdyby","neni","budou", "furt",
+            "někdy","posílá","přílohu","nebylo","tenhle","tady","tomu","takhle","podle","všechno","tvoje","nebude",
+            "nikdo","dnes","dneska","jste","skoro","tebe","jeho","stále","hodně","nějaký","nejaky","dost","aspon","porad",
+            "který","takový","vůbec","kvůli","kvuli","hned","prave","zase","stejne","kazdej","každej","udělal","tohodle",
+            "pokud","přesně","vždycky","aspoň","nejak","byla","jinak","nikdy","budem","takze","vsechny","hlavne","vsechno",
+            "uplně","možná","mnou","nějak","opět","alespoň","mohl","nejsou","máme","protoze","youtube","Jako","Taky","Fakt",
+            "Jsem","Posíláte","Proste","Třeba","jono","Jono","Jsem","Nebo","Když","Takze","Protože","Vždyť","Není","mezi",
+            "facebook","docela","chtel","chci","myslim","Skupině","fotku","kolik","mame","prej","todle","nejde","proc",
+            "dobry","cely","tesim","nejlepsi","nejvic"};
     }
 }
