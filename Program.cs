@@ -13,6 +13,7 @@ namespace pocitani_zprav_fb
     {
         public string Jmeno { get; set; }
         public List<Message> VsechnyZpravy { get; set; }
+        public int PocetFotek { get; set; }
         public List<string> VsechnySlova { get; set; }
     }
 
@@ -25,7 +26,67 @@ namespace pocitani_zprav_fb
 
     class Statistic
     {
+        public List<Ucastnik> VygenerujStatistiky(int indexSouboru)
+        {
+            string json = "";
+            using (StreamReader reader = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), @$"kdp\message_{indexSouboru}.json")))
+            {
+                json = reader.ReadToEnd();
+            }
+            JObject messenger = JObject.Parse(json);
 
+            //účastníci
+            IList<JToken> jtokenUcastnici = messenger["participants"].Children().ToList(); //vybrání účastníků
+            List<Ucastnik> ucastniciChatu = new();
+            foreach (JToken ucastnik in jtokenUcastnici)
+            {
+                ucastniciChatu.Add(new() { Jmeno = Dekoduj(ucastnik["name"].ToString()), VsechnySlova = new(), VsechnyZpravy = new() });
+            }
+
+
+            IList<JToken> jtokenZpravy = messenger["messages"].Children().ToList(); //vybrání zpráv
+            IList<Message> zpravy = new List<Message>();
+            foreach (JToken jtoken in jtokenZpravy)
+            {
+                if (jtoken["content"] != null)
+                {
+                    Message message = jtoken.ToObject<Message>();
+                    zpravy.Add(message);
+                }
+            }
+            char[] splittingChars = { ' ', '.', ',', '?', '!' };
+            //slova ve všech zprávách -> list všech slov
+            foreach (Message zprava in zpravy)
+            {
+                string[] slova = zprava.content.Split(splittingChars, StringSplitOptions.RemoveEmptyEntries);
+                //slovaVeVsechZpravach.AddRange(slova);
+
+                if (ucastniciChatu.All(u => u.Jmeno != Dekoduj(zprava.sender_name)))
+                { //přidání nesoučasného účastníka
+                    ucastniciChatu.Add(new Ucastnik() { Jmeno = Dekoduj(zprava.sender_name), VsechnySlova = new(), VsechnyZpravy = new() });
+                }
+
+                Ucastnik autor = ucastniciChatu.Find(u => u.Jmeno == Dekoduj(zprava.sender_name));
+                autor.VsechnySlova.AddRange(slova);
+                autor.VsechnyZpravy.Add(zprava);
+                ucastniciChatu[ucastniciChatu.IndexOf(ucastniciChatu.Find(u => u.Jmeno == Dekoduj(zprava.sender_name)))] = autor;
+            }
+            return ucastniciChatu;
+        }
+        public string Dekoduj(string text)
+        { //ISO-8859-1
+            try
+            {
+                Encoding spravneKodovani = Encoding.GetEncoding("ISO-8859-1");
+                var odescapovanyText = System.Text.RegularExpressions.Regex.Unescape(text);
+                return Encoding.UTF8.GetString(spravneKodovani.GetBytes(odescapovanyText));
+            }
+            catch
+            {
+                return text;
+            }
+
+        }
     }
 
     class Program
@@ -50,12 +111,15 @@ namespace pocitani_zprav_fb
             Console.WriteLine("Messenger statistics by 23laky");
             Console.Write("Zadejte počet souborů:");
             int pocetSouboru = int.Parse(Console.ReadLine());
-            List<Ucastnik> ucastnici = VygenerujStatistiky(1);
+
+            Statistic Stats = new();
+
+            List<Ucastnik> ucastnici = Stats.VygenerujStatistiky(1);
             if (pocetSouboru > 1)
             {
                 for (int i = 2; i <= pocetSouboru; i++)
                 {
-                    List<Ucastnik> dalsiUcastnici = VygenerujStatistiky(i);
+                    List<Ucastnik> dalsiUcastnici = Stats.VygenerujStatistiky(i);
                     foreach (Ucastnik ucastnik in dalsiUcastnici)
                     {
                         if (ucastnici.Exists(u => u.Jmeno == ucastnik.Jmeno)) //pokud existuje
@@ -246,52 +310,6 @@ namespace pocitani_zprav_fb
             }
 
         }
-        static List<Ucastnik> VygenerujStatistiky(int indexSouboru)
-        {
-            string json = "";
-            using (StreamReader reader = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), @$"kdp\message_{indexSouboru}.json")))
-            {
-                json = reader.ReadToEnd();
-            }
-            JObject messenger = JObject.Parse(json);
 
-            //účastníci
-            IList<JToken> jtokenUcastnici = messenger["participants"].Children().ToList(); //vybrání účastníků
-            List<Ucastnik> ucastniciChatu = new();
-            foreach (JToken ucastnik in jtokenUcastnici)
-            {
-                ucastniciChatu.Add(new() { Jmeno = Dekoduj(ucastnik["name"].ToString()), VsechnySlova = new(), VsechnyZpravy = new() });
-            }
-
-
-            IList<JToken> jtokenZpravy = messenger["messages"].Children().ToList(); //vybrání zpráv
-            IList<Message> zpravy = new List<Message>();
-            foreach (JToken jtoken in jtokenZpravy)
-            {
-                if (jtoken["content"] != null)
-                {
-                    Message message = jtoken.ToObject<Message>();
-                    zpravy.Add(message);
-                }
-            }
-            char[] splittingChars = { ' ', '.', ',', '?', '!' };
-            //slova ve všech zprávách -> list všech slov
-            foreach (Message zprava in zpravy)
-            {
-                string[] slova = zprava.content.Split(splittingChars, StringSplitOptions.RemoveEmptyEntries);
-                //slovaVeVsechZpravach.AddRange(slova);
-
-                if (ucastniciChatu.All(u => u.Jmeno != Dekoduj(zprava.sender_name)))
-                { //přidání nesoučasného účastníka
-                    ucastniciChatu.Add(new Ucastnik() { Jmeno = Dekoduj(zprava.sender_name), VsechnySlova = new(), VsechnyZpravy = new() });
-                }
-
-                Ucastnik autor = ucastniciChatu.Find(u => u.Jmeno == Dekoduj(zprava.sender_name));
-                autor.VsechnySlova.AddRange(slova);
-                autor.VsechnyZpravy.Add(zprava);
-                ucastniciChatu[ucastniciChatu.IndexOf(ucastniciChatu.Find(u => u.Jmeno == Dekoduj(zprava.sender_name)))] = autor;
-            }
-            return ucastniciChatu;
-        }
     }
 }
