@@ -15,6 +15,19 @@ namespace pocitani_zprav_fb
         public List<Message> VsechnyZpravy { get; set; }
         public List<string> VsechnySlova { get; set; }
     }
+
+    class Message
+    {
+        public string sender_name { get; set; }
+        public string content { get; set; }
+        public long timestamp_ms { get; set; }
+    }
+
+    class Statistic
+    {
+
+    }
+
     class Program
     {
         static string PovoleneZnakyProZpravy = "aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzžAÁBCČDĎEÉĚFGHIÍJKLMNŇOÓQPRŘSŠTŤUÚŮVWXYÝZŽ#1234567890()-: *,.!?@&{}+;%/";
@@ -31,6 +44,7 @@ namespace pocitani_zprav_fb
             "Proste","Třeba","jono","Jono","Jsem","Nebo","Když","Takze","Protože","Vždyť","Není","mezi","facebook","docela","chtel","chci",
             "myslim","Skupině","fotku","kolik","mame","prej","todle","nejde","proc","dobry","cely","tesim","nejlepsi","nejvic"};
         static int VelikostZebricku = 3;
+
         static void Main(string[] args)
         {
             Console.WriteLine("Messenger statistics by 23laky");
