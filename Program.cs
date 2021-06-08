@@ -126,7 +126,7 @@ namespace pocitani_zprav_fb
                 Console.WriteLine("Uvedený soubor neexistuje, zkuste to znovu:");
                 cestaKSouboru = Console.ReadLine();
             }
-            Console.Write("Zadejte počet souborů:");
+            Console.Write("Zadejte počet souborů: ");
             int pocetSouboru;
             while (!int.TryParse(Console.ReadLine(), out pocetSouboru))
             {
