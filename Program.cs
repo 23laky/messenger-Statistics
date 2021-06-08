@@ -58,7 +58,10 @@ namespace pocitani_zprav_fb
         public List<Ucastnik> VygenerujStatistiky(int indexSouboru, string cesta)
         {
             string json = "";
-            using (StreamReader reader = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), @$"kdp\message_{indexSouboru}.json")))
+            string aktualniSoubor = string.Join(null, cesta.SkipLast(6));
+            aktualniSoubor += indexSouboru;
+            aktualniSoubor += ".json";
+            using (StreamReader reader = new(aktualniSoubor))
             {
                 json = reader.ReadToEnd();
             }
