@@ -55,7 +55,7 @@ namespace pocitani_zprav_fb
 
     class Statistic
     {
-        public List<Ucastnik> VygenerujStatistiky(int indexSouboru)
+        public List<Ucastnik> VygenerujStatistiky(int indexSouboru, string cesta)
         {
             string json = "";
             using (StreamReader reader = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), @$"kdp\message_{indexSouboru}.json")))
@@ -114,15 +114,26 @@ namespace pocitani_zprav_fb
         static void Main(string[] args)
         {
             Console.WriteLine("Messenger statistics by 23laky");
+            Console.WriteLine("Zadejte cestu k souboru message_1.json" +
+                @"(např. C:\Users\Laky\message_1.json):");
+
+            string cestaKSouboru = Console.ReadLine().Trim();
+            while (!File.Exists(cestaKSouboru))
+            {
+                Console.WriteLine("Uvedený soubor neexistuje, zkuste to znovu:");
+                cestaKSouboru = Console.ReadLine();
+            }
             Console.Write("Zadejte počet souborů:");
-
-            int pocetSouboru = int.Parse(Console.ReadLine());
-
+            int pocetSouboru;
+            while (!int.TryParse(Console.ReadLine(), out pocetSouboru))
+            {
+                Console.Write("špatně zadán počet souborů, zkuste to znovu:");
+            }
             Statistic Stats = new();
             List<Ucastnik> ucastnici = new();
             for (int i = 1; i <= pocetSouboru; i++)
             {
-                List<Ucastnik> dalsiUcastnici = Stats.VygenerujStatistiky(i);
+                List<Ucastnik> dalsiUcastnici = Stats.VygenerujStatistiky(i, cestaKSouboru);
                 foreach (Ucastnik ucastnik in dalsiUcastnici)
                 {
                     if (ucastnici.Exists(u => u.Jmeno == ucastnik.Jmeno)) //pokud existuje
