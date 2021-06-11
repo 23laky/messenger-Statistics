@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj": {}
+    "c:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj": {
+    "c:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj",
+        "projectUniqueName": "c:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj",
         "projectName": "pocitani zprav fb",
-        "projectPath": "C:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj",
+        "projectPath": "c:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj",
         "packagesPath": "C:\\Users\\Lukáš\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\obj\\",
+        "outputPath": "c:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Lukáš\\AppData\\Roaming\\NuGet\\NuGet.Config",

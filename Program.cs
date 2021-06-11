@@ -25,6 +25,7 @@ namespace pocitani_zprav_fb
         public string Sender_name { get; set; }
         public string Content { get; set; }
         public long Timestamp_ms { get; set; }
+        public DateTime Date { get; set; }
         public Photo[] Photos { get; set; }
         public Message() { }
     }
@@ -201,14 +202,18 @@ namespace pocitani_zprav_fb
             Random random = new();
             List<Message> listOfRandomMessages = new();
             var query = from m in participant.VsechnyZpravy
-                        where m.Content.Length > 50 //minimální délka zprávy ve znacích
+                        where m.Content.Length > 100 && m.Content.Length < 250 && !m.Content.StartsWith("https") //minimální délka zprávy ve znacích
                         select m;
-            for (int i = 0; i < 5; i++) //počet náhodných zpráv
+            int ix = query.Count() < 5 ? query.Count() : 5;
+            for (int i = ix; i > 0; i--) //počet náhodných zpráv
             {
                 int numberOfMessage = random.Next(query.Count());
-                listOfRandomMessages.Add(query.ToList()[numberOfMessage]);
+                Message message = new();
+                message.Content = Dekoder.Dekoduj(query.ToList()[numberOfMessage].Content);
+                message.Sender_name = Dekoder.Dekoduj(query.ToList()[numberOfMessage].Sender_name);
+                message.Date = UnixTimeStampToDateTime(query.ToList()[numberOfMessage].Timestamp_ms);
+                listOfRandomMessages.Add(message);
             }
-
             XmlSerializer serializer = new(listOfRandomMessages.GetType());
             using (StreamWriter writer = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 $@"23lakySoft\RandomMessages-{participant.Jmeno}.xml")))
