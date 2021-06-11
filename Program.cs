@@ -6,11 +6,13 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text.Encodings;
 using System.Text;
+using System.Xml.Serialization;
+using System.Xml;
 
 namespace pocitani_zprav_fb
 {
-    struct Photo { }
-    struct Ucastnik
+    public struct Photo { }
+    public struct Ucastnik
     {
         public string Jmeno { get; set; }
         public List<Message> VsechnyZpravy { get; set; }
@@ -18,12 +20,13 @@ namespace pocitani_zprav_fb
         public List<string> VsechnySlova { get; set; }
     }
 
-    class Message
+    public class Message
     {
         public string Sender_name { get; set; }
         public string Content { get; set; }
         public long Timestamp_ms { get; set; }
         public Photo[] Photos { get; set; }
+        public Message() { }
     }
 
     static class Dekoder
@@ -40,9 +43,7 @@ namespace pocitani_zprav_fb
                 foreach (char c in s)
                 {
                     if (!PovoleneZnakyProZpravy.Contains(c))
-                    {
                         s = s.Replace(c, '\0');
-                    }
                 }
                 return s;
             }
@@ -120,7 +121,8 @@ namespace pocitani_zprav_fb
             Console.WriteLine("Zadejte cestu k souboru message_1.json" +
                 @"(např. C:\Users\Laky\message_1.json):");
 
-            string cestaKSouboru = Console.ReadLine().Trim();
+            //string cestaKSouboru = Console.ReadLine().Trim();
+            string cestaKSouboru = @"C:\Users\Lukáš\Desktop\kdp\message_1.json";
             while (!File.Exists(cestaKSouboru))
             {
                 Console.WriteLine("Uvedený soubor neexistuje, zkuste to znovu:");
@@ -182,17 +184,39 @@ namespace pocitani_zprav_fb
 
                     Dictionary<string, int> ucastnikuvSlovnik = VygenerujZebricek(ucastnik.VsechnySlova);
 
-                    VypisNejpouzivanejsiSlova(ucastnikuvSlovnik);
-                    VypisNejdelsiSlovo(ucastnikuvSlovnik);
-                    VypisUnikatniSlova(ucastnikuvSlovnik);
+                    //VypisNejpouzivanejsiSlova(ucastnikuvSlovnik);
+                    //VypisNejdelsiSlovo(ucastnikuvSlovnik);
+                    //VypisUnikatniSlova(ucastnikuvSlovnik);
 
-                    VypisPrvniAPosledniZpravu(ucastnik);
-                    VypisNejdelsiZpravu(ucastnik);
-                    VypisNejaktivnejsiRoky(ucastnik);
-                    VypisNeajktivnejsiDen(ucastnik);
+                    //VypisPrvniAPosledniZpravu(ucastnik);
+                    //VypisNejdelsiZpravu(ucastnik);
+                    //VypisNejaktivnejsiRoky(ucastnik);
+                    //VypisNeajktivnejsiDen(ucastnik);
+                    VypisNahodnouZpravu(ucastnik); //tato metoda pouze zapisuje do xml, ne do konzole
                 }
             }
         }
+        static void VypisNahodnouZpravu(Ucastnik participant)
+        {
+            Random random = new();
+            List<Message> listOfRandomMessages = new();
+            var query = from m in participant.VsechnyZpravy
+                        where m.Content.Length > 50 //minimální délka zprávy ve znacích
+                        select m;
+            for (int i = 0; i < 5; i++) //počet náhodných zpráv
+            {
+                int numberOfMessage = random.Next(query.Count());
+                listOfRandomMessages.Add(query.ToList()[numberOfMessage]);
+            }
+
+            XmlSerializer serializer = new(listOfRandomMessages.GetType());
+            using (StreamWriter writer = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                $@"23lakySoft\RandomMessages-{participant.Jmeno}.xml")))
+            {
+                serializer.Serialize(writer, listOfRandomMessages);
+            }
+        }
+
         static int VypisCelkemFotekVKonverzaci(List<Ucastnik> participants)
         {
             var query = (from p in participants

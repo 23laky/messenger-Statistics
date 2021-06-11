@@ -6,7 +6,6 @@ C:\Users\Lukáš\source\repos\pocitani zprav fb\bin\Debug\net5.0\pocitani zprav 
 C:\Users\Lukáš\source\repos\pocitani zprav fb\bin\Debug\net5.0\ref\pocitani zprav fb.dll
 C:\Users\Lukáš\source\repos\pocitani zprav fb\bin\Debug\net5.0\pocitani zprav fb.pdb
 C:\Users\Lukáš\source\repos\pocitani zprav fb\bin\Debug\net5.0\Newtonsoft.Json.dll
-C:\Users\Lukáš\source\repos\pocitani zprav fb\obj\Debug\net5.0\pocitani zprav fb.csprojAssemblyReference.cache
 C:\Users\Lukáš\source\repos\pocitani zprav fb\obj\Debug\net5.0\pocitani zprav fb.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\Lukáš\source\repos\pocitani zprav fb\obj\Debug\net5.0\pocitani zprav fb.AssemblyInfoInputs.cache
 C:\Users\Lukáš\source\repos\pocitani zprav fb\obj\Debug\net5.0\pocitani zprav fb.AssemblyInfo.cs
@@ -16,3 +15,4 @@ C:\Users\Lukáš\source\repos\pocitani zprav fb\obj\Debug\net5.0\pocitani zprav 
 C:\Users\Lukáš\source\repos\pocitani zprav fb\obj\Debug\net5.0\ref\pocitani zprav fb.dll
 C:\Users\Lukáš\source\repos\pocitani zprav fb\obj\Debug\net5.0\pocitani zprav fb.pdb
 C:\Users\Lukáš\source\repos\pocitani zprav fb\obj\Debug\net5.0\pocitani zprav fb.genruntimeconfig.cache
+C:\Users\Lukáš\source\repos\pocitani zprav fb\obj\Debug\net5.0\pocitani zprav fb.csproj.AssemblyReference.cache
