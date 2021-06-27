@@ -122,8 +122,11 @@ namespace pocitani_zprav_fb
             Console.WriteLine("Zadejte cestu k souboru message_1.json" +
                 @"(např. C:\Users\Laky\message_1.json):");
 
-            //string cestaKSouboru = Console.ReadLine().Trim();
-            string cestaKSouboru = @"C:\Users\Lukáš\Desktop\kdp\message_1.json";
+            string cestaKSouboru = Console.ReadLine().Trim();
+
+            //string určený k testování
+            //string cestaKSouboru = @"C:\Users\Lukáš\Desktop\kdp\message_1.json";
+
             while (!File.Exists(cestaKSouboru))
             {
                 Console.WriteLine("Uvedený soubor neexistuje, zkuste to znovu:");
@@ -185,15 +188,15 @@ namespace pocitani_zprav_fb
 
                     Dictionary<string, int> ucastnikuvSlovnik = VygenerujZebricek(ucastnik.VsechnySlova);
 
-                    //VypisNejpouzivanejsiSlova(ucastnikuvSlovnik);
-                    //VypisNejdelsiSlovo(ucastnikuvSlovnik);
-                    //VypisUnikatniSlova(ucastnikuvSlovnik);
+                    VypisNejpouzivanejsiSlova(ucastnikuvSlovnik);
+                    VypisNejdelsiSlovo(ucastnikuvSlovnik);
+                    VypisUnikatniSlova(ucastnikuvSlovnik);
 
-                    //VypisPrvniAPosledniZpravu(ucastnik);
-                    //VypisNejdelsiZpravu(ucastnik);
-                    //VypisNejaktivnejsiRoky(ucastnik);
-                    //VypisNeajktivnejsiDen(ucastnik);
-                    VypisNahodnouZpravu(ucastnik); //tato metoda pouze zapisuje do xml, ne do konzole
+                    VypisPrvniAPosledniZpravu(ucastnik);
+                    VypisNejdelsiZpravu(ucastnik);
+                    VypisNejaktivnejsiRoky(ucastnik);
+                    VypisNeajktivnejsiDen(ucastnik);
+                    //VypisNahodnouZpravu(ucastnik); //tato metoda pouze zapisuje do xml, ne do konzole
                 }
             }
         }
@@ -202,9 +205,10 @@ namespace pocitani_zprav_fb
             Random random = new();
             List<Message> listOfRandomMessages = new();
             var query = from m in participant.VsechnyZpravy
-                        where m.Content.Length > 100 && m.Content.Length < 250 && !m.Content.StartsWith("https") //minimální délka zprávy ve znacích
+                        where m.Content.Length > 160 && m.Content.Length < 260 && !m.Content.StartsWith("http") //minimální délka zprávy ve znacích, bez odkazů
                         select m;
             int ix = query.Count() < 5 ? query.Count() : 5;
+
             for (int i = ix; i > 0; i--) //počet náhodných zpráv
             {
                 int numberOfMessage = random.Next(query.Count());
