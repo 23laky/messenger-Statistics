@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "j31c29fnEUirCzU4tbtYcCuRGCI0VUBcOd7Y98MT46J6dpfp5nH5EhI/fjnFpiyzQo+pvpYOt/CDJkLc549xlQ==",
+  "dgSpecHash": "6RE+b4Q3ykN/PjaDD0cv4RxNo1FD7/sd2hjr5vRvIwun9XmQVfq/9ZSCW1YyIb8xYP+bbuOVvSELTHRFC5a3LQ==",
   "success": true,
-  "projectFilePath": "c:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj",
+  "projectFilePath": "C:\\Users\\Lukáš\\source\\repos\\pocitani zprav fb\\pocitani zprav fb.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Lukáš\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512"
   ],
